@@ -1,36 +1,32 @@
 # Job Search App
 
-This repository started as a minimal React Native project for a job search application.
-It now also includes a simple Kotlin Multiplatform Mobile (KMM) module and example Swift projects for iOS and macOS.
+This repository provides a minimal React Native application alongside a Kotlin Multiplatform Mobile (KMM) module and simple SwiftUI examples for iOS and macOS.
 
-## Getting Started
+## Getting Started with Visual Studio
 
-1. Ensure you have the React Native development environment set up. See the [React Native documentation](https://reactnative.dev/docs/environment-setup) for instructions.
-2. Install dependencies (may require internet access):
+1. Install [Visual Studio Code](https://code.visualstudio.com/) and add the **React Native Tools** extension. This extension allows you to run React Native applications directly from the editor.
+2. Follow the [React Native environment setup](https://reactnative.dev/docs/environment-setup) for your operating system. This installs Node.js, the Android SDK (or Xcode for iOS), and the React Native CLI.
+3. Clone this repository and install dependencies:
    ```bash
    npm install
    ```
-3. Run on Android:
+4. Open the project folder in Visual Studio Code. Start an Android or iOS simulator from your installed SDK tools.
+5. With the simulator running, press `F5` or choose **Run Android** / **Run iOS** from the Command Palette to launch the app in the emulator. You can also run the scripts manually:
    ```bash
-   npm run android
-   ```
-4. Run on iOS:
-   ```bash
-   npm run ios
+   npm run android    # builds and runs on Android
+   npm run ios        # builds and runs on iOS
    ```
 
 ### Kotlin Multiplatform
 
-The `kmm` directory contains a basic Kotlin Multiplatform project. To build the
-shared framework for the iOS simulator on macOS run:
+The `kmm` directory contains a basic Kotlin Multiplatform project. To build the shared framework for the iOS simulator on macOS run:
 
 ```bash
 cd kmm
 ./gradlew :shared:assembleIosSimulatorArm64DebugFramework
 ```
 
-The generated framework can then be opened with Xcode and executed in the iOS
-emulator.
+The generated framework can then be opened with Xcode and executed in the iOS simulator.
 
 ## Project Structure
 
