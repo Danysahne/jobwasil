@@ -1,6 +1,7 @@
 # Job Search App
 
-This repository contains a minimal React Native project for a job search application that can run on both iOS and Android.
+This repository contains a minimal React Native project for a job search application.
+It now also includes example Swift projects demonstrating basic iOS and macOS apps.
 
 ## Getting Started
 
@@ -20,7 +21,10 @@ This repository contains a minimal React Native project for a job search applica
 
 ## Project Structure
 
-- `src/App.js` - Main application component.
+- `src/App.js` - Main React Native component.
+- `ios/` - Contains a minimal SwiftUI iOS example.
+- `android/` - Placeholder for an Android project.
+- `macos/` - Contains a minimal SwiftUI macOS example.
 - `package.json` - Project metadata and scripts.
 
 Feel free to expand on this skeleton to add job listings, search functionality, and more.
