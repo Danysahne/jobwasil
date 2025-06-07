@@ -1,3 +1,5 @@
 node_modules
 ios/build
 android/app/build
+kmm/build
+kmm/.gradle
