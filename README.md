@@ -1,7 +1,7 @@
 # Job Search App
 
-This repository contains a minimal React Native project for a job search application.
-It now also includes example Swift projects demonstrating basic iOS and macOS apps.
+This repository started as a minimal React Native project for a job search application.
+It now also includes a simple Kotlin Multiplatform Mobile (KMM) module and example Swift projects for iOS and macOS.
 
 ## Getting Started
 
@@ -18,6 +18,19 @@ It now also includes example Swift projects demonstrating basic iOS and macOS ap
    ```bash
    npm run ios
    ```
+
+### Kotlin Multiplatform
+
+The `kmm` directory contains a basic Kotlin Multiplatform project. To build the
+shared framework for the iOS simulator on macOS run:
+
+```bash
+cd kmm
+./gradlew :shared:assembleIosSimulatorArm64DebugFramework
+```
+
+The generated framework can then be opened with Xcode and executed in the iOS
+emulator.
 
 ## Project Structure
 
