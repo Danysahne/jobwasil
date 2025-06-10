@@ -1,28 +1,24 @@
 # Job Search App
 
-This repository contains a simple React Native project demonstrating a dummy job search application. It can run on both Android and iOS, including the iOS simulator available on a Macbook.
+This repository contains a simple React project demonstrating a dummy job search application. The app runs in the browser and provides a basic search over a static list of jobs.
 
 ## Getting Started
 
-1. Ensure you have the React Native development environment set up. See the [React Native documentation](https://reactnative.dev/docs/environment-setup) for instructions.
-2. Install dependencies (requires internet access):
+1. Ensure Node.js is installed.
+2. Install dependencies:
    ```bash
    npm install
    ```
-3. Open the project in Visual Studio Code.
-4. To launch the app in the iOS simulator (Macbook required):
+3. Start the development server:
    ```bash
-   npm run ios
+   npm start
    ```
-   The command opens the default iOS simulator and starts the Metro bundler.
-5. To launch on Android, ensure an Android emulator is available and run:
-   ```bash
-   npm run android
-   ```
+   The app will be available at `http://localhost:3000`.
 
 ## Project Structure
 
+- `public/index.html` – HTML entry point.
 - `src/App.js` – Main application component with a search bar and a static list of jobs.
 - `package.json` – Project metadata and scripts. A test script prints "No tests yet".
 
-Feel free to expand this skeleton with real job listings, network requests, or additional features.
+Feel free to expand this skeleton with real job listings, network requests or additional features.
