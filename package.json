@@ -1,15 +1,15 @@
 {
   "name": "jobsearchapp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
-    "start": "react-native start",
-    "android": "react-native run-android",
-    "ios": "react-native run-ios",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
     "test": "echo \"No tests yet\""
   },
   "dependencies": {
     "react": "18.2.0",
-    "react-native": "0.73.5"
+    "react-dom": "18.2.0",
+    "react-scripts": "5.0.1"
   }
 }
