@@ -1,5 +1,6 @@
-// Use the current bundesAPI base URL for all job search requests
-const BASE_URL = 'https://jobsuche.api.bund.dev';
+// NEUE BASIS: Dein lokaler Proxy-Endpunkt
+const BASE_URL = 'http://192.168.2.100:3000/api';
+  // hier deine lokale Mac-IP einsetzen!
 
 async function request(endpoint: string, params: Record<string, string | number> = {}) {
   const url = new URL(`${BASE_URL}${endpoint}`);
@@ -8,7 +9,6 @@ async function request(endpoint: string, params: Record<string, string | number>
     url.searchParams.append(key, String(value));
   });
 
-  // The jobsuche.api.bund.dev endpoint does not require special headers
   const response = await fetch(url.toString());
 
   if (!response.ok) {
@@ -24,7 +24,7 @@ export async function fetchJobs(size: number = 10, page: number = 1) {
 }
 
 export async function fetchJobDetail(jobId: string) {
-  return request(`/jobs/${jobId}`);
+  return request(`/job/${jobId}`);
 }
 
 export async function searchJobs(query: string, size: number = 10, page: number = 1) {
