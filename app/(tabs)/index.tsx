@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { ActivityIndicator, Card } from 'react-native-paper';
+import { fetchJobs } from '@/services/BundesApi';
 
 export default function HomeScreen() {
   const [jobs, setJobs] = useState<any[]>([]);
@@ -9,12 +10,9 @@ export default function HomeScreen() {
   useEffect(() => {
     async function loadJobs() {
       try {
-        const res = await fetch(
-          'https://www.bundesapi.de/api/jobboerse/jobsuche?limit=10'
-        );
-        const data = await res.json();
+        const data = await fetchJobs(10, 1);
         const results =
-          data?.stellenangebote || data?.jobs || data?.result || [];
+          (data as any)?.stellenangebote || (data as any)?.jobs || (data as any)?.result || [];
         setJobs(Array.isArray(results) ? results : []);
       } catch (e) {
         console.error(e);
