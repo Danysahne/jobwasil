@@ -2,9 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { ActivityIndicator, Card } from 'react-native-paper';
 import { fetchJobs } from '@/services/BundesApi';
+import type { Job } from '@/JobwasilAPI';
+
+function formatArbeitsort(arbeitsort?: Job['arbeitsort']): string {
+  if (!arbeitsort) return '';
+  const { ort, plz } = arbeitsort;
+  return `${ort ?? ''} ${plz ?? ''}`.trim();
+}
 
 export default function HomeScreen() {
-  const [jobs, setJobs] = useState<any[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,7 +40,11 @@ export default function HomeScreen() {
           <Card key={idx} style={styles.card}>
             <Card.Title
               title={job.berufsbezeichnung || job.titel || job.title}
-              subtitle={job.arbeitsort || job.ort || job.location}
+              subtitle={
+                job.arbeitsort
+                  ? formatArbeitsort(job.arbeitsort)
+                  : job.ort || job.location || ''
+              }
             />
           </Card>
         ))
