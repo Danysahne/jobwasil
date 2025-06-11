@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { ActivityIndicator, Card, Text } from 'react-native-paper';
 import type { Job } from '@/JobwasilAPI';
-import { fetchJobDetailBundDev } from '@/services/BundesApi';
+import { fetchJobDetail } from '@/services/BundesApi';
 
 export default function JobDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -14,7 +14,7 @@ export default function JobDetailScreen() {
     async function load() {
       if (typeof id !== 'string') return;
       try {
-        const data = await fetchJobDetailBundDev(id);
+        const data = await fetchJobDetail(id);
         setJob(data as Job);
       } catch (e) {
         console.error(e);

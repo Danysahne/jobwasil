@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { ActivityIndicator, Card, Searchbar } from 'react-native-paper';
-import { fetchJobs, searchJobsBundDev } from '@/services/BundesApi';
+import { fetchJobs, searchJobs } from '@/services/BundesApi';
 import { useRouter } from 'expo-router';
 import type { Job } from '@/JobwasilAPI';
 
@@ -20,7 +20,7 @@ export default function HomeScreen() {
   async function loadJobs(search?: string) {
     setLoading(true);
     try {
-      const data = search ? await searchJobsBundDev(search, 10, 1) : await fetchJobs(10, 1);
+      const data = search ? await searchJobs(search, 10, 1) : await fetchJobs(10, 1);
       const results =
         (data as any)?.stellenangebote || (data as any)?.jobs || (data as any)?.result || [];
       setJobs(Array.isArray(results) ? results : []);
