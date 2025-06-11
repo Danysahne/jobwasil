@@ -1,4 +1,6 @@
-const BASE_URL = 'https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4';
+// NEUE BASIS: Dein lokaler Proxy-Endpunkt
+const BASE_URL = 'http://192.168.2.100:3000/api';
+  // hier deine lokale Mac-IP einsetzen!
 
 async function request(endpoint: string, params: Record<string, string | number> = {}) {
   const url = new URL(`${BASE_URL}${endpoint}`);
@@ -7,12 +9,8 @@ async function request(endpoint: string, params: Record<string, string | number>
     url.searchParams.append(key, String(value));
   });
 
-  const response = await fetch(url.toString(), {
-    headers: {
-      'X-API-Key': 'jobboerse-jobsuche',
-      'Accept': 'application/json',
-    },
-  });
+  // KEIN Header mehr nötig, Proxy kümmert sich darum
+  const response = await fetch(url.toString());
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -27,5 +25,5 @@ export async function fetchJobs(size: number = 10, page: number = 1) {
 }
 
 export async function fetchJobDetail(jobId: string) {
-  return request(`/jobs/${jobId}`);
+  return request(`/job/${jobId}`);
 }
