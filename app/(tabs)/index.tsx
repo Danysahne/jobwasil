@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
-import { ActivityIndicator, Card } from 'react-native-paper';
-import { fetchJobs } from '@/services/BundesApi';
+import { ActivityIndicator, Card, Searchbar } from 'react-native-paper';
+import { fetchJobs, searchJobsBundDev } from '@/services/BundesApi';
+import { useRouter } from 'expo-router';
 import type { Job } from '@/JobwasilAPI';
 
 function formatArbeitsort(arbeitsort?: Job['arbeitsort']): string {
@@ -13,31 +14,50 @@ function formatArbeitsort(arbeitsort?: Job['arbeitsort']): string {
 export default function HomeScreen() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
+  const router = useRouter();
+
+  async function loadJobs(search?: string) {
+    setLoading(true);
+    try {
+      const data = search ? await searchJobsBundDev(search, 10, 1) : await fetchJobs(10, 1);
+      const results =
+        (data as any)?.stellenangebote || (data as any)?.jobs || (data as any)?.result || [];
+      setJobs(Array.isArray(results) ? results : []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadJobs() {
-      try {
-        const data = await fetchJobs(10, 1);
-        const results =
-          (data as any)?.stellenangebote || (data as any)?.jobs || (data as any)?.result || [];
-        setJobs(Array.isArray(results) ? results : []);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     loadJobs();
   }, []);
 
+  function onSearch() {
+    loadJobs(query);
+  }
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <Searchbar
+        placeholder="Search jobs"
+        value={query}
+        onChangeText={setQuery}
+        onSubmitEditing={onSearch}
+        style={styles.searchBar}
+      />
       {loading ? (
         <ActivityIndicator animating style={styles.loading} />
       ) : (
         jobs.map((job, idx) => (
-          <Card key={idx} style={styles.card}>
+          <Card
+            key={idx}
+            style={styles.card}
+            onPress={() =>
+              router.push(`/job/${(job as any).hashId || (job as any).refnr || idx}`)
+            }>
             <Card.Title
               title={job.berufsbezeichnung || job.titel || job.title}
               subtitle={
@@ -62,5 +82,8 @@ const styles = StyleSheet.create({
   },
   loading: {
     marginTop: 32,
+  },
+  searchBar: {
+    marginBottom: 16,
   },
 });
