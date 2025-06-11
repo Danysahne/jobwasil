@@ -1,6 +1,6 @@
 # Welcome to your Expo app 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app). It shows job listings from the [bundesAPI jobsuche](https://github.com/bundesAPI/jobsuche-api) using Material UI components from **react-native-paper**.
 
 ## Get started
 
