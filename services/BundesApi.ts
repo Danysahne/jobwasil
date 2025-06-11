@@ -9,12 +9,11 @@ async function request(endpoint: string, params: Record<string, string | number>
     url.searchParams.append(key, String(value));
   });
 
-  // KEIN Header mehr nötig, Proxy kümmert sich darum
   const response = await fetch(url.toString());
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`API request failed: ${response.status} ${errorText}`);
+    throw new Error(`BundDev API request failed: ${response.status} ${errorText}`);
   }
 
   return response.json();
@@ -26,4 +25,8 @@ export async function fetchJobs(size: number = 10, page: number = 1) {
 
 export async function fetchJobDetail(jobId: string) {
   return request(`/job/${jobId}`);
+}
+
+export async function searchJobs(query: string, size: number = 10, page: number = 1) {
+  return request('/jobs', { was: query, size, page });
 }
