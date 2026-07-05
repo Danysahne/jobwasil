@@ -143,7 +143,13 @@ app.post('/api/translate', translateLimiter, async (req, res) => {
 if (process.env.WEB_BUILD_DIR) {
   const webDir = join(__dirname, process.env.WEB_BUILD_DIR);
   app.use(express.static(webDir));
-  app.get('*', (req, res) => res.sendFile(join(webDir, 'index.html')));
+  // SPA fallback (Express 5: bare '*' routes are no longer allowed)
+  app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api')) {
+      return res.sendFile(join(webDir, 'index.html'));
+    }
+    next();
+  });
 }
 
 app.listen(PORT, () => {

@@ -41,3 +41,4 @@ app-example
 
 # Claude Code local config & worktrees
 .claude/
+.tunnel/
