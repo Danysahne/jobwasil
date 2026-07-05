@@ -38,3 +38,6 @@ yarn-error.*
 
 app-example
 .env
+
+# Claude Code local config & worktrees
+.claude/
