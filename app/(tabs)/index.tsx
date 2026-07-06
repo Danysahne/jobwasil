@@ -105,6 +105,7 @@ export default function HomeScreen() {
     return {
       id: jobId(job, idx),
       title: isArabic ? job._titleAr ?? titleDe : titleDe,
+      translating: isArabic && !job._titleAr,
       titleDe,
       titleAr: job._titleAr,
       employer: (job as any).arbeitgeber,

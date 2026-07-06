@@ -2,6 +2,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text as RNText, View } from 'react-native';
 import { ActivityIndicator, Card, Chip, Divider, IconButton, Text, useTheme } from 'react-native-paper';
+import { TranslatingText } from '@/components/Shimmer';
 import { fetchJobDetail } from '@/services/BundesApi';
 import { translateFields } from '@/services/TranslateApi';
 import { useFavorites } from '@/context/FavoritesContext';
@@ -244,10 +245,18 @@ export default function JobDetailScreen() {
             <Card style={styles.card}>
               <Card.Content>
                 <View style={[styles.titleRow, isArabic && styles.rowRtl]}>
-                  <Text variant="headlineSmall" style={[styles.title, styles.titleFlex, isArabic && styles.rtl]}>{title}</Text>
+                  <View style={styles.titleFlex}>
+                    <TranslatingText pending={translating} lines={2} lineHeight={22} lastLineWidth="55%">
+                      <Text variant="headlineSmall" style={[styles.title, isArabic && styles.rtl]}>{title}</Text>
+                    </TranslatingText>
+                  </View>
                   {heartButton}
                 </View>
-                {firma ? <Text variant="titleMedium" style={[styles.company, isArabic && styles.rtl]}>{firma}</Text> : null}
+                {firma ? (
+                  <TranslatingText pending={translating} lines={1} lineHeight={15} lastLineWidth="40%">
+                    <Text variant="titleMedium" style={[styles.company, isArabic && styles.rtl]}>{firma}</Text>
+                  </TranslatingText>
+                ) : null}
                 {formatLocation(job) ? (
                   <Text variant="bodyMedium" style={[styles.location, isArabic && styles.rtl]}>
                     📍 {formatLocation(job)}
@@ -305,11 +314,9 @@ export default function JobDetailScreen() {
                 <Card.Title title={t('description')} />
                 <Divider />
                 <Card.Content style={styles.descContent}>
-                  {translating ? (
-                    <ActivityIndicator animating style={styles.translating} />
-                  ) : (
+                  <TranslatingText pending={translating} lines={10} lineHeight={14} lastLineWidth="45%">
                     <DescriptionBlock text={beschreibung} rtl={isArabic} />
-                  )}
+                  </TranslatingText>
                 </Card.Content>
               </Card>
             ) : null}
