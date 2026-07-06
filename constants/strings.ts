@@ -67,6 +67,22 @@ export const strings = {
     access_placeholder: 'Zugangscode eingeben',
     access_submit: 'Weiter',
     access_error: 'Ungültiger Code. Bitte versuche es erneut.',
+
+    // Onboarding
+    ob_welcome: 'Willkommen bei Jobwasil!',
+    ob_choose_lang: 'In welcher Sprache möchtest du die App nutzen?',
+    ob_features_title: 'Das kann Jobwasil',
+    ob_feature_search_title: 'Jobs finden',
+    ob_feature_search_text: 'Durchsuche über eine Million Stellenangebote der Bundesagentur für Arbeit — mit Filtern für Ort, Umkreis und Arbeitszeit.',
+    ob_feature_translate_title: 'Alles auf Arabisch',
+    ob_feature_translate_text: 'Stellentitel und Beschreibungen werden automatisch übersetzt. Du kannst jederzeit zwischen Deutsch und Arabisch wechseln.',
+    ob_feature_fav_title: 'Favoriten speichern',
+    ob_feature_fav_text: 'Tippe auf das Herz, um interessante Stellen zu merken — auch offline verfügbar.',
+    ob_settings_title: 'Deine Einstellungen',
+    ob_settings_text: 'Richte dir die App ein — du kannst alles später jederzeit im Einstellungen-Tab ändern.',
+    ob_next: 'Weiter',
+    ob_back: 'Zurück',
+    ob_start: 'Los geht’s!',
   },
   ar: {
     // Tabs
@@ -132,6 +148,22 @@ export const strings = {
     access_placeholder: 'أدخل رمز الدخول',
     access_submit: 'متابعة',
     access_error: 'رمز غير صحيح. حاول مرة أخرى.',
+
+    // Onboarding
+    ob_welcome: 'أهلاً بك في جوب وصيل!',
+    ob_choose_lang: 'بأي لغة تريد استخدام التطبيق؟',
+    ob_features_title: 'ماذا يقدّم جوب وصيل؟',
+    ob_feature_search_title: 'ابحث عن وظائف',
+    ob_feature_search_text: 'ابحث في أكثر من مليون وظيفة من وكالة العمل الألمانية — مع فلاتر للمدينة ونطاق البحث ووقت العمل.',
+    ob_feature_translate_title: 'كل شيء بالعربية',
+    ob_feature_translate_text: 'تُترجم عناوين الوظائف وأوصافها تلقائياً. يمكنك التبديل بين الألمانية والعربية في أي وقت.',
+    ob_feature_fav_title: 'احفظ المفضلة',
+    ob_feature_fav_text: 'اضغط على القلب لحفظ الوظائف المهمة — متاحة حتى بدون إنترنت.',
+    ob_settings_title: 'إعداداتك',
+    ob_settings_text: 'جهّز التطبيق كما يناسبك — يمكنك تغيير كل شيء لاحقاً من تبويب الإعدادات.',
+    ob_next: 'التالي',
+    ob_back: 'رجوع',
+    ob_start: 'هيا نبدأ!',
   },
 } as const;
 

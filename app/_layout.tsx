@@ -7,6 +7,7 @@ import { Provider as PaperProvider } from 'react-native-paper';
 import { Platform, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 import { AccessGate } from '@/components/AccessGate';
+import { Onboarding } from '@/components/Onboarding';
 import { darkTheme, lightTheme, navDarkTheme, navLightTheme } from '@/constants/theme';
 import { FavoritesProvider } from '@/context/FavoritesContext';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
@@ -56,7 +57,8 @@ function AppStack() {
 
   return (
     <PaperProvider theme={isDark ? darkTheme : lightTheme}>
-      <AccessGate>
+      <Onboarding>
+        <AccessGate>
         <ThemeProvider value={isDark ? navDarkTheme : navLightTheme}>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -68,7 +70,8 @@ function AppStack() {
           </Stack>
           <StatusBar style={isDark ? 'light' : 'dark'} />
         </ThemeProvider>
-      </AccessGate>
+        </AccessGate>
+      </Onboarding>
     </PaperProvider>
   );
 }
