@@ -28,6 +28,8 @@ function formatArbeitsort(arbeitsort?: Job['arbeitsort']): string {
   return `${ort ?? ''} ${plz ?? ''}`.trim();
 }
 
+const ARABIC_RE = /[؀-ۿ]/;
+
 export default function HomeScreen() {
   const [jobs, setJobs] = useState<JobWithTranslation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +37,8 @@ export default function HomeScreen() {
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<JobFilters>({});
   const [filterVisible, setFilterVisible] = useState(false);
+  // German term actually sent to the API when the user searched in Arabic
+  const [searchedAs, setSearchedAs] = useState<string | null>(null);
   const router = useRouter();
   const { t, isArabic, lang } = useLanguage();
   const { row, textAlign } = useDirection();
@@ -44,8 +48,21 @@ export default function HomeScreen() {
     setLoading(true);
     setError(false);
     try {
+      // Arabic search terms are translated to German first — the
+      // Bundesagentur API only matches German vocabulary.
+      let was = search.trim() || undefined;
+      let germanQuery: string | null = null;
+      if (was && ARABIC_RE.test(was)) {
+        const result = await translateFields({ q: was }, `query_${was}`, 'ar-de');
+        if (result.q && result.q !== was) {
+          germanQuery = result.q;
+          was = result.q;
+        }
+      }
+      setSearchedAs(germanQuery);
+
       const data = await searchJobs({
-        was: search || undefined,
+        was,
         wo: f.wo,
         umkreis: f.umkreis,
         arbeitszeit: f.arbeitszeit,
@@ -164,6 +181,15 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Arabic query was translated — show the German term actually used */}
+        {searchedAs && !loading ? (
+          <Text
+            variant="bodySmall"
+            style={[styles.searchedAs, { textAlign, color: colors.onSurfaceVariant }]}>
+            {t('searched_as')}: {searchedAs}
+          </Text>
+        ) : null}
+
         {/* Results */}
         {loading ? (
           <JobCardSkeleton count={5} />
@@ -208,6 +234,7 @@ const styles = StyleSheet.create({
   brandText: { flex: 1 },
   brandName: { fontWeight: '800' },
   searchRow: { alignItems: 'center', gap: 4, marginBottom: 16 },
+  searchedAs: { marginTop: -8, marginBottom: 12 },
   searchBar: { flex: 1 },
   badge: { position: 'absolute', top: 2, right: 2 },
   message: { marginTop: 24, textAlign: 'center', fontSize: 15 },

@@ -86,13 +86,32 @@ app.get('/api/job/:id', (req, res) => {
 
 // ── Translation endpoint ───────────────────────────────────────────────────
 // POST /api/translate
-// Body: { fields: { key: "German text", ... } }
-// Returns: { fields: { key: "Arabic text", ... } }
+// Body: { fields: { key: "text", ... }, direction?: 'de-ar' | 'ar-de' }
+// Returns: { fields: { key: "translated text", ... } }
+
+const SYSTEM_PROMPTS = {
+  'de-ar':
+    'You are a professional translator specialising in German job postings. ' +
+    'Translate each labelled section to Arabic. ' +
+    'Keep the exact section labels in square brackets. ' +
+    'Preserve line breaks, bullet points (- item), and **bold** markers. ' +
+    'Return only the translated sections, nothing else.',
+  'ar-de':
+    'You are a professional translator for the German job market. ' +
+    'Translate each labelled Arabic section to German. ' +
+    'For job search terms, return the common German job title as used on ' +
+    'German job boards (e.g. سائق → Fahrer). ' +
+    'Keep the exact section labels in square brackets. ' +
+    'Return only the translated sections, nothing else.',
+};
 
 app.post('/api/translate', translateLimiter, async (req, res) => {
-  const { fields } = req.body;
+  const { fields, direction = 'de-ar' } = req.body;
   if (!fields || typeof fields !== 'object') {
     return res.status(400).json({ error: 'fields object required' });
+  }
+  if (!SYSTEM_PROMPTS[direction]) {
+    return res.status(400).json({ error: 'direction must be de-ar or ar-de' });
   }
 
   // Build a single prompt with all fields to translate in one API call
@@ -109,12 +128,7 @@ app.post('/api/translate', translateLimiter, async (req, res) => {
     const message = await anthropic.messages.create({
       model: 'claude-haiku-4-5',
       max_tokens: 3000,
-      system:
-        'You are a professional translator specialising in German job postings. ' +
-        'Translate each labelled section to Arabic. ' +
-        'Keep the exact section labels in square brackets. ' +
-        'Preserve line breaks, bullet points (- item), and **bold** markers. ' +
-        'Return only the translated sections, nothing else.',
+      system: SYSTEM_PROMPTS[direction],
       messages: [{ role: 'user', content: payload }],
     });
 

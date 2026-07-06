@@ -15,6 +15,7 @@ export const strings = {
     search_placeholder: 'Jobs suchen …',
     no_results: 'Keine Stellen gefunden.',
     load_error: 'Stellen konnten nicht geladen werden.',
+    searched_as: 'Gesucht nach',
 
     // Filters
     filters: 'Filter',
@@ -96,6 +97,7 @@ export const strings = {
     search_placeholder: 'ابحث عن وظائف …',
     no_results: 'لم يتم العثور على وظائف.',
     load_error: 'تعذّر تحميل الوظائف.',
+    searched_as: 'تم البحث عن',
 
     // Filters
     filters: 'الفلاتر',

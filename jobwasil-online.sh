@@ -6,6 +6,13 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 RUN="$DIR/.tunnel"
 mkdir -p "$RUN"
 
+# Mit --build vorher den Web-Build aktualisieren (nach Code-Änderungen nötig)
+if [ "$1" = "--build" ]; then
+  echo "⏳ Erzeuge Web-Build ..."
+  (cd "$DIR" && EXPO_PUBLIC_API_URL=/api npx expo export --platform web >/dev/null 2>&1)
+  echo "✔ Web-Build aktualisiert"
+fi
+
 # Alte Instanzen beenden
 "$DIR/jobwasil-offline.sh" >/dev/null 2>&1 || true
 
