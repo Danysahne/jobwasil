@@ -1,15 +1,13 @@
-// NEUE BASIS: Dein lokaler Proxy-Endpunkt
-const BASE_URL = 'http://192.168.2.100:3000/api';
-  // hier deine lokale Mac-IP einsetzen!
+import { apiFetch } from '@/services/ApiClient';
 
 async function request(endpoint: string, params: Record<string, string | number> = {}) {
-  const url = new URL(`${BASE_URL}${endpoint}`);
-
+  const query = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
+    query.append(key, String(value));
   });
+  const qs = query.toString();
 
-  const response = await fetch(url.toString());
+  const response = await apiFetch(`${endpoint}${qs ? `?${qs}` : ''}`);
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -19,14 +17,35 @@ async function request(endpoint: string, params: Record<string, string | number>
   return response.json();
 }
 
+export interface JobSearchParams {
+  was?: string;
+  wo?: string;
+  umkreis?: number;
+  arbeitszeit?: string[]; // e.g. ['vz', 'ho'] — joined with ';'
+  size?: number;
+  page?: number;
+}
+
+export async function searchJobs({
+  was,
+  wo,
+  umkreis,
+  arbeitszeit,
+  size = 10,
+  page = 1,
+}: JobSearchParams = {}) {
+  const params: Record<string, string | number> = { size, page };
+  if (was) params.was = was;
+  if (wo) params.wo = wo;
+  if (umkreis) params.umkreis = umkreis;
+  if (arbeitszeit?.length) params.arbeitszeit = arbeitszeit.join(';');
+  return request('/jobs', params);
+}
+
 export async function fetchJobs(size: number = 10, page: number = 1) {
-  return request('/jobs', { size, page });
+  return searchJobs({ size, page });
 }
 
 export async function fetchJobDetail(jobId: string) {
   return request(`/job/${jobId}`);
-}
-
-export async function searchJobs(query: string, size: number = 10, page: number = 1) {
-  return request('/jobs', { was: query, size, page });
 }
