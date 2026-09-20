@@ -13,6 +13,10 @@ dotenv.config({ path: join(__dirname, '.env') });
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Behind the Cloudflare tunnel every request carries X-Forwarded-For; without
+// this the rate limiter refuses to run (ERR_ERL_UNEXPECTED_X_FORWARDED_FOR).
+app.set('trust proxy', 1);
+
 // ── CORS ───────────────────────────────────────────────────────────────────
 // ALLOWED_ORIGINS: comma-separated list, e.g. "https://jobwasil.example.com".
 // Unset = allow all (local development).
@@ -67,6 +71,14 @@ async function proxyRequest(endpoint, queryParams, res) {
     const response = await fetch(url.toString(), {
       headers: { 'X-API-Key': process.env.BUNDES_API_KEY, Accept: 'application/json' },
     });
+    // The upstream API answers errors with an empty body, so surface its
+    // status instead of failing on JSON.parse.
+    if (!response.ok) {
+      console.error(`Bundesagentur API: HTTP ${response.status} for ${endpoint}`);
+      return res
+        .status(response.status === 403 ? 503 : response.status)
+        .json({ error: 'upstream', status: response.status });
+    }
     const data = await response.json();
     res.json(data);
   } catch (error) {
