@@ -47,7 +47,34 @@ const translateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-const BASE_URL = 'https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4';
+const BASE_URL =
+  process.env.BUNDES_API_URL ??
+  'https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4';
+
+// ── Upstream response cache ────────────────────────────────────────────────
+// Job postings barely change minute to minute, and the Bundesagentur blocks
+// callers that request too eagerly. Identical requests are served from here.
+const CACHE_TTL_MS = Number(process.env.CACHE_TTL_MS ?? 5 * 60_000);
+const CACHE_MAX = 300;
+const upstreamCache = new Map(); // url → { expires, data }
+
+function cacheGet(key) {
+  const hit = upstreamCache.get(key);
+  if (!hit) return null;
+  if (hit.expires < Date.now()) {
+    upstreamCache.delete(key);
+    return null;
+  }
+  return hit.data;
+}
+
+function cacheSet(key, data) {
+  if (upstreamCache.size >= CACHE_MAX) {
+    // Map keeps insertion order — drop the oldest entry.
+    upstreamCache.delete(upstreamCache.keys().next().value);
+  }
+  upstreamCache.set(key, { expires: Date.now() + CACHE_TTL_MS, data });
+}
 
 // Lazy: only instantiate if the key is present so the proxy starts without it
 let anthropic = null;
@@ -67,6 +94,13 @@ async function proxyRequest(endpoint, queryParams, res) {
   for (const [key, value] of Object.entries(queryParams)) {
     url.searchParams.append(key, value);
   }
+
+  const cached = cacheGet(url.toString());
+  if (cached) {
+    res.set('X-Cache', 'HIT');
+    return res.json(cached);
+  }
+
   try {
     const response = await fetch(url.toString(), {
       headers: { 'X-API-Key': process.env.BUNDES_API_KEY, Accept: 'application/json' },
@@ -80,6 +114,8 @@ async function proxyRequest(endpoint, queryParams, res) {
         .json({ error: 'upstream', status: response.status });
     }
     const data = await response.json();
+    cacheSet(url.toString(), data); // only successful responses are cached
+    res.set('X-Cache', 'MISS');
     res.json(data);
   } catch (error) {
     console.error('Proxy Error:', error);
