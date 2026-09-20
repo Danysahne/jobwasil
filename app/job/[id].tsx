@@ -1,8 +1,9 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text as RNText, View } from 'react-native';
-import { ActivityIndicator, Card, Chip, Divider, IconButton, Text, useTheme } from 'react-native-paper';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Linking, Platform, ScrollView, Share, StyleSheet, Text as RNText, View } from 'react-native';
+import { ActivityIndicator, Button, Card, Chip, Divider, IconButton, Snackbar, Text, useTheme } from 'react-native-paper';
 import { TranslatingText } from '@/components/Shimmer';
+import { formatDate } from '@/utils/format';
 import { fetchJobDetail } from '@/services/BundesApi';
 import { translateFields } from '@/services/TranslateApi';
 import { useFavorites } from '@/context/FavoritesContext';
@@ -28,11 +29,6 @@ interface JobDetail {
   istArbeitnehmerUeberlassung?: boolean;
   stellenangebotsart?: string;
   referenznummer?: string;
-}
-
-function formatDate(dateStr: string | undefined, locale: string) {
-  if (!dateStr) return '';
-  try { return new Date(dateStr).toLocaleDateString(locale); } catch { return dateStr; }
 }
 
 function formatSalary(job: JobDetail, perHour: string, perMonth: string) {
@@ -158,18 +154,17 @@ export default function JobDetailScreen() {
   const { isArabic, t } = useLanguage();
   const { colors } = useTheme();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const dateLocale = isArabic ? 'ar' : 'de-DE';
 
   const [job, setJob] = useState<JobDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [translating, setTranslating] = useState(false);
   const [error, setError] = useState(false);
+  const [snackbar, setSnackbar] = useState('');
 
   // Translated field overrides — only set when Arabic is active
   const [translated, setTranslated] = useState<Record<string, string>>({});
 
-  // Load raw job data
-  useEffect(() => {
+  const load = useCallback(() => {
     if (typeof id !== 'string') return;
     setLoading(true);
     setError(false);
@@ -179,6 +174,8 @@ export default function JobDetailScreen() {
       .catch(e => { console.error(e); setError(true); })
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(load, [load]);
 
   // Translate when language switches to Arabic
   useEffect(() => {
@@ -229,6 +226,47 @@ export default function JobDetailScreen() {
       />
     ) : null;
 
+  // Official listing on the Bundesagentur site — where people actually apply.
+  const jobUrl = `https://www.arbeitsagentur.de/jobsuche/jobdetail/${
+    job?.referenznummer ?? id
+  }`;
+
+  const openApplyPage = () => {
+    Linking.openURL(jobUrl).catch(() => setSnackbar(t('job_load_error')));
+  };
+
+  const shareJob = async () => {
+    const message = `${t('share_intro')}: ${title}\n${jobUrl}`;
+
+    if (Platform.OS !== 'web') {
+      try {
+        await Share.share({ message });
+      } catch {
+        // Share sheet dismissed
+      }
+      return;
+    }
+
+    const nav = typeof navigator !== 'undefined' ? (navigator as any) : undefined;
+    if (nav?.share) {
+      try {
+        await nav.share({ title, text: t('share_intro'), url: jobUrl });
+        return;
+      } catch (e: any) {
+        if (e?.name === 'AbortError') return; // user closed the share sheet
+        // otherwise fall through to copying
+      }
+    }
+    try {
+      await nav?.clipboard?.writeText(message);
+      setSnackbar(t('share_copied'));
+    } catch {
+      // Clipboard blocked (no focus, in-app browser, old browser):
+      // show the link so it can still be copied by hand.
+      setSnackbar(jobUrl);
+    }
+  };
+
   return (
     <>
       <Stack.Screen options={{ title }} />
@@ -236,9 +274,14 @@ export default function JobDetailScreen() {
         {loading ? (
           <ActivityIndicator animating style={styles.loading} />
         ) : error || !job ? (
-          <Text style={[styles.error, { color: colors.error }]}>
-            {t('job_load_error')}
-          </Text>
+          <View style={styles.errorBox}>
+            <Text style={[styles.error, { color: colors.error }]}>
+              {t('job_load_error')}
+            </Text>
+            <Button mode="contained" icon="refresh" onPress={load}>
+              {t('retry')}
+            </Button>
+          </View>
         ) : (
           <>
             {/* Header */}
@@ -265,6 +308,24 @@ export default function JobDetailScreen() {
               </Card.Content>
             </Card>
 
+            {/* Apply + share */}
+            <View style={[styles.actions, isArabic && styles.rowRtl]}>
+              <Button
+                mode="contained"
+                icon="open-in-new"
+                onPress={openApplyPage}
+                style={styles.applyButton}
+                contentStyle={styles.applyContent}>
+                {t('apply_now')}
+              </Button>
+              <Button mode="outlined" icon="share-variant" onPress={shareJob}>
+                {t('share_job')}
+              </Button>
+            </View>
+            <Text variant="bodySmall" style={[styles.applyHint, { color: colors.onSurfaceVariant, textAlign: isArabic ? 'right' : 'left' }]}>
+              {t('apply_hint')}
+            </Text>
+
             {/* Chips */}
             <View style={[styles.chips, isArabic && styles.chipsRtl]}>
               {formatContract(job.vertragsdauer, t) ? (
@@ -290,13 +351,13 @@ export default function JobDetailScreen() {
                 {job.eintrittszeitraum?.von ? (
                   <View style={[styles.row, isArabic && styles.rowRtl]}>
                     <Text variant="labelLarge">📅 {t('start_date')}</Text>
-                    <Text variant="bodyLarge" style={styles.value}>{formatDate(job.eintrittszeitraum.von, dateLocale)}</Text>
+                    <Text variant="bodyLarge" style={styles.value}>{formatDate(job.eintrittszeitraum.von, isArabic)}</Text>
                   </View>
                 ) : null}
                 {job.datumErsteVeroeffentlichung ? (
                   <View style={[styles.row, isArabic && styles.rowRtl]}>
                     <Text variant="labelLarge">🗓 {t('published')}</Text>
-                    <Text variant="bodyMedium" style={styles.value}>{formatDate(job.datumErsteVeroeffentlichung, dateLocale)}</Text>
+                    <Text variant="bodyMedium" style={styles.value}>{formatDate(job.datumErsteVeroeffentlichung, isArabic)}</Text>
                   </View>
                 ) : null}
                 {job.referenznummer ? (
@@ -323,6 +384,9 @@ export default function JobDetailScreen() {
           </>
         )}
       </ScrollView>
+      <Snackbar visible={!!snackbar} onDismiss={() => setSnackbar('')} duration={2500}>
+        {snackbar}
+      </Snackbar>
     </>
   );
 }
@@ -332,6 +396,11 @@ const styles = StyleSheet.create({
   loading: { marginTop: 48 },
   translating: { marginVertical: 24 },
   error: { marginTop: 32, textAlign: 'center' },
+  errorBox: { alignItems: 'center', gap: 20, marginBottom: 32 },
+  actions: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  applyButton: { flex: 1 },
+  applyContent: { paddingVertical: 6 },
+  applyHint: { marginTop: -4, marginBottom: 4 },
   card: { borderRadius: 12 },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start' },
   titleFlex: { flex: 1 },

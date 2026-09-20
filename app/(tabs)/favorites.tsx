@@ -1,6 +1,7 @@
 import { JobCard, JobCardData } from '@/components/JobCard';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { formatDate } from '@/utils/format';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
@@ -21,9 +22,7 @@ export default function FavoritesScreen() {
     employer: fav.arbeitgeber,
     beruf: fav.beruf,
     location: fav.ort,
-    date: fav.savedAt
-      ? new Date(fav.savedAt).toLocaleDateString(isArabic ? 'ar' : 'de-DE')
-      : undefined,
+    date: formatDate(fav.savedAt, isArabic) || undefined,
   }));
 
   return (

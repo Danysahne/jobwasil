@@ -15,6 +15,9 @@ export const strings = {
     search_placeholder: 'Jobs suchen …',
     no_results: 'Keine Stellen gefunden.',
     load_error: 'Stellen konnten nicht geladen werden.',
+    load_error_hint: 'Bitte prüfe deine Internetverbindung und versuche es erneut.',
+    retry: 'Erneut versuchen',
+    load_more: 'Mehr Stellen laden',
     searched_as: 'Gesucht nach',
 
     // Filters
@@ -52,6 +55,11 @@ export const strings = {
     ref_number: 'Referenznummer',
     description: 'Stellenbeschreibung',
     job_load_error: 'Stelle konnte nicht geladen werden.',
+    apply_now: 'Jetzt bewerben',
+    apply_hint: 'Öffnet die offizielle Stellenanzeige der Bundesagentur für Arbeit.',
+    share_job: 'Teilen',
+    share_intro: 'Schau dir diese Stelle an',
+    share_copied: 'Link kopiert',
     temp_work: 'Zeitarbeit',
     contract_unlimited: 'Unbefristet',
     contract_limited: 'Befristet',
@@ -97,6 +105,9 @@ export const strings = {
     search_placeholder: 'ابحث عن وظائف …',
     no_results: 'لم يتم العثور على وظائف.',
     load_error: 'تعذّر تحميل الوظائف.',
+    load_error_hint: 'يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.',
+    retry: 'حاول مرة أخرى',
+    load_more: 'تحميل المزيد من الوظائف',
     searched_as: 'تم البحث عن',
 
     // Filters
@@ -134,6 +145,11 @@ export const strings = {
     ref_number: 'الرقم المرجعي',
     description: 'وصف الوظيفة',
     job_load_error: 'تعذّر تحميل الوظيفة.',
+    apply_now: 'قدّم الآن',
+    apply_hint: 'يفتح إعلان الوظيفة الرسمي لدى وكالة العمل الألمانية.',
+    share_job: 'مشاركة',
+    share_intro: 'ألقِ نظرة على هذه الوظيفة',
+    share_copied: 'تم نسخ الرابط',
     temp_work: 'عمل مؤقت',
     contract_unlimited: 'غير محدد المدة',
     contract_limited: 'محدد المدة',
