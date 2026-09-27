@@ -122,7 +122,12 @@ def call(path: str, key: str, payload: dict | None = None) -> dict:
     req = urllib.request.Request(
         url,
         data=json.dumps(payload).encode() if payload is not None else None,
-        headers={"Authorization": f"Key {key}", "Content-Type": "application/json"},
+        headers={
+            "Authorization": f"Key {key}",
+            "Content-Type": "application/json",
+            # Cloudflare rejects the default Python-urllib agent with 1010.
+            "User-Agent": "jobwasil-spot/1.0",
+        },
         method="POST" if payload is not None else "GET",
     )
     try:
@@ -133,13 +138,13 @@ def call(path: str, key: str, payload: dict | None = None) -> dict:
         raise RuntimeError(f"Higgsfield HTTP {e.code}: {body}") from e
 
 
-def submit(scene: dict, key: str, model: str, ratio: str) -> tuple[str, str]:
+def submit(scene: dict, key: str, model: str, ratio: str, resolution: str) -> tuple[str, str]:
     payload = {
         "prompt": scene["prompt"],
         "negative_prompt": NEGATIVE,
         "duration": scene["seconds"],
         "aspect_ratio": ratio,
-        "resolution": "1080p",
+        "resolution": resolution,
         "generate_audio": False,  # voiceover and music are added in the edit
     }
     if scene.get("image"):
@@ -173,6 +178,8 @@ def main() -> None:
     ap.add_argument("--scene", type=int, help="nur diese Szene (1-7)")
     ap.add_argument("--model", default=DEFAULT_MODEL, help="Modellpfad der Higgsfield-API")
     ap.add_argument("--ratio", default="16:9", choices=["16:9", "9:16", "1:1"])
+    # 1080p costs roughly twice the credits of 720p for the same clip.
+    ap.add_argument("--resolution", default="720p", choices=["480p", "720p", "1080p"])
     ap.add_argument("--list-models", action="store_true")
     args = ap.parse_args()
 
@@ -191,8 +198,10 @@ def main() -> None:
         if out.exists():
             print(f"✔ {scene['name']} liegt schon vor — übersprungen")
             continue
-        print(f"⏳ {scene['name']} ({scene['seconds']}s) wird eingereicht …")
-        request_id, status_url = submit(scene, key, args.model, args.ratio)
+        print(f"⏳ {scene['name']} ({scene['seconds']}s, {args.resolution}) wird eingereicht …")
+        request_id, status_url = submit(
+            scene, key, args.model, args.ratio, args.resolution
+        )
         print(f"   Auftrag {request_id} — warte auf Generierung (ca. 2-3 min)")
         url = wait(status_url, key)
         urllib.request.urlretrieve(url, out)

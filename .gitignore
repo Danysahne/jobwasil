@@ -44,3 +44,6 @@ app-example
 .tunnel/
 trailer/.env
 trailer/clips/
+trailer/build/
+trailer/stimmproben/
+trailer/*.mp4
