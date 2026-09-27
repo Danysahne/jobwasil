@@ -32,8 +32,10 @@ n=${#present[@]}
 echo "Verarbeite $n Szene(n): ${present[*]}"
 
 # ── Sprecher erzeugen ──────────────────────────────────────────────────────
+# Der Dateiname enthält die Stimme — sonst bliebe beim Stimmwechsel der alte Ton liegen.
+VTAG=$(echo "$VOICE" | tr -cd 'A-Za-z0-9')
 for i in $(seq 0 $((n-1))); do
-  vo="build/vo_${present[$i]}.mp3"
+  vo="build/vo_${VTAG}_${present[$i]}.mp3"
   [ -f "$vo" ] || python3 -m edge_tts --voice "$VOICE" --rate="$RATE" \
       --text "${texts[$i]}" --write-media "$vo" 2>/dev/null
 done
@@ -67,7 +69,7 @@ else
 fi
 
 # ── Sprecher an den Szenenanfang legen ─────────────────────────────────────
-for i in $(seq 0 $((n-1))); do inputs+=(-i "build/vo_${present[$i]}.mp3"); done
+for i in $(seq 0 $((n-1))); do inputs+=(-i "build/vo_${VTAG}_${present[$i]}.mp3"); done
 afilter=""; amix=""
 for i in $(seq 0 $((n-1))); do
   idx=$((n+i))
