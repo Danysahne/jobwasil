@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Linking, Platform, ScrollView, Share, StyleSheet, Text as RNText, View } from 'react-native';
 import { ActivityIndicator, Button, Card, Chip, Divider, IconButton, Snackbar, Text, useTheme } from 'react-native-paper';
 import { TranslatingText } from '@/components/Shimmer';
-import { formatDate } from '@/utils/format';
+import { formatCityRegion, formatDate } from '@/utils/format';
 import { fetchJobDetail } from '@/services/BundesApi';
 import { translateFields } from '@/services/TranslateApi';
 import { useFavorites } from '@/context/FavoritesContext';
@@ -40,7 +40,7 @@ function formatSalary(job: JobDetail, perHour: string, perMonth: string) {
 function formatLocation(job: JobDetail) {
   const loc = job.stellenlokationen?.[0]?.adresse;
   if (!loc) return '';
-  return [loc.ort, loc.region].filter(Boolean).join(', ');
+  return formatCityRegion(loc.ort, loc.region);
 }
 
 type Translate = (key: any) => string;

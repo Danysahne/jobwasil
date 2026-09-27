@@ -23,3 +23,44 @@ export function formatDate(value: string | number | undefined, isArabic: boolean
   }
   return isArabic ? isolateLtr(formatted) : formatted;
 }
+
+// The API returns regions as SCREAMING_SNAKE_CASE ("NORDRHEIN_WESTFALEN").
+const BUNDESLAENDER: Record<string, string> = {
+  BADEN_WUERTTEMBERG: 'Baden-Württemberg',
+  BAYERN: 'Bayern',
+  BERLIN: 'Berlin',
+  BRANDENBURG: 'Brandenburg',
+  BREMEN: 'Bremen',
+  HAMBURG: 'Hamburg',
+  HESSEN: 'Hessen',
+  MECKLENBURG_VORPOMMERN: 'Mecklenburg-Vorpommern',
+  NIEDERSACHSEN: 'Niedersachsen',
+  NORDRHEIN_WESTFALEN: 'Nordrhein-Westfalen',
+  RHEINLAND_PFALZ: 'Rheinland-Pfalz',
+  SAARLAND: 'Saarland',
+  SACHSEN: 'Sachsen',
+  SACHSEN_ANHALT: 'Sachsen-Anhalt',
+  SCHLESWIG_HOLSTEIN: 'Schleswig-Holstein',
+  THUERINGEN: 'Thüringen',
+};
+
+export function prettyRegion(region?: string): string {
+  if (!region) return '';
+  const known = BUNDESLAENDER[region.toUpperCase()];
+  if (known) return known;
+  // Unknown value (e.g. abroad) — title-case it rather than shouting.
+  return region
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join('-');
+}
+
+/** "Rheine, Nordrhein-Westfalen" — without repeating city-states. */
+export function formatCityRegion(ort?: string, region?: string): string {
+  const city = ort?.trim();
+  const state = prettyRegion(region);
+  if (city && state && city.toLowerCase() !== state.toLowerCase()) {
+    return `${city}, ${state}`;
+  }
+  return city || state;
+}

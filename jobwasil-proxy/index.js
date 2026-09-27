@@ -49,11 +49,46 @@ const translateLimiter = rateLimit({
 
 const BASE_URL =
   process.env.BUNDES_API_URL ??
-  'https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4';
+  'https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc';
+
+// The Bundesagentur retired the v4 search in September 2026 (it answers 403);
+// the official site now calls v6. Job details still only exist on v4.
+const SEARCH_PATH = '/v6/jobs';
+const DETAIL_PATH = '/v4/jobdetails';
+
+// v6 returns a different shape than v4. Normalise it here so the app keeps
+// working against one stable format.
+function normalizeSearch(data) {
+  if (!data || !Array.isArray(data.ergebnisliste)) return data;
+  return {
+    ...data,
+    stellenangebote: data.ergebnisliste.map((j) => {
+      const adresse = j.stellenlokationen?.[0]?.adresse;
+      return {
+        beruf: j.hauptberuf,
+        titel: j.stellenangebotsTitel,
+        refnr: j.referenznummer,
+        arbeitgeber: j.firma,
+        arbeitsort: adresse
+          ? {
+              plz: adresse.plz,
+              ort: adresse.ort,
+              region: adresse.region,
+              land: adresse.land,
+              entfernung: j.entfernung,
+            }
+          : undefined,
+        aktuelleVeroeffentlichungsdatum: j.datumErsteVeroeffentlichung,
+        externeUrl: j.externeURL,
+      };
+    }),
+  };
+}
 
 // ── Upstream response cache ────────────────────────────────────────────────
-// Job postings barely change minute to minute, and the Bundesagentur blocks
-// callers that request too eagerly. Identical requests are served from here.
+// Job postings barely change minute to minute, so identical requests are
+// served from here — it keeps load off the upstream API and speeds up
+// paging back and forth.
 const CACHE_TTL_MS = Number(process.env.CACHE_TTL_MS ?? 5 * 60_000);
 const CACHE_MAX = 300;
 const upstreamCache = new Map(); // url → { expires, data }
@@ -89,7 +124,7 @@ app.get('/api/health', (req, res) => {
 
 // ── Bundesagentur proxy ────────────────────────────────────────────────────
 
-async function proxyRequest(endpoint, queryParams, res) {
+async function proxyRequest(endpoint, queryParams, res, transform = (d) => d) {
   const url = new URL(`${BASE_URL}${endpoint}`);
   for (const [key, value] of Object.entries(queryParams)) {
     url.searchParams.append(key, value);
@@ -113,7 +148,7 @@ async function proxyRequest(endpoint, queryParams, res) {
         .status(response.status === 403 ? 503 : response.status)
         .json({ error: 'upstream', status: response.status });
     }
-    const data = await response.json();
+    const data = transform(await response.json());
     cacheSet(url.toString(), data); // only successful responses are cached
     res.set('X-Cache', 'MISS');
     res.json(data);
@@ -124,12 +159,12 @@ async function proxyRequest(endpoint, queryParams, res) {
 }
 
 app.get('/api/jobs', (req, res) => {
-  proxyRequest('/jobs', req.query, res);
+  proxyRequest(SEARCH_PATH, req.query, res, normalizeSearch);
 });
 
 app.get('/api/job/:id', (req, res) => {
   const base64Id = Buffer.from(req.params.id).toString('base64');
-  proxyRequest(`/jobdetails/${base64Id}`, {}, res);
+  proxyRequest(`${DETAIL_PATH}/${base64Id}`, {}, res);
 });
 
 // ── Translation endpoint ───────────────────────────────────────────────────
