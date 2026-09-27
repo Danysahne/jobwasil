@@ -106,6 +106,63 @@ SCENES = [
 ]
 
 
+# ── Zweiter Spot: Gespräch im Café (30 s) ─────────────────────────────────
+# Seedance erzeugt hier den Ton selbst mit. Das ist der einzige Weg zu
+# passenden Lippenbewegungen — ein Lippensynchron-Modell gibt es nicht,
+# und nachträglich untergelegte Sprache würde bei einem Dialog auffallen.
+DIALOG_SCENES = [
+    {
+        "name": "d1_problem",
+        "seconds": 8,
+        "audio": True,
+        "prompt": (
+            "Two friends at a small table in a warm, softly lit café, afternoon light "
+            "through the window. A German woman in her late twenties asks in German: "
+            "\"Und, schon was gefunden?\" The young man opposite her, of Middle Eastern "
+            "appearance, shakes his head and answers in German: \"Nein. Die Anzeigen sind "
+            "alle auf Deutsch.\" Natural documentary cinematography, shallow depth of "
+            "field, warm colour grade, subtle handheld camera. Clear German dialogue."
+        ),
+    },
+    {
+        "name": "d2_empfehlung",
+        "seconds": 8,
+        "audio": True,
+        "prompt": (
+            "Same café, same two friends. The woman leans forward, takes out her phone and "
+            "says warmly in German: \"Kennst du Jobwasil? Da kannst du auf Arabisch suchen. "
+            "Die App übersetzt alles.\" The young man looks up, surprised and interested. "
+            "Over-the-shoulder framing, the phone screen angled away from camera. Natural "
+            "documentary cinematography, warm afternoon light. Clear German dialogue."
+        ),
+    },
+    {
+        "name": "d3_reaktion",
+        "seconds": 8,
+        "audio": True,
+        "prompt": (
+            "Same café. Close two-shot. The young man of Middle Eastern appearance asks in "
+            "German, hopeful: \"Auch die Stellenbeschreibungen?\" The woman nods and "
+            "replies in German: \"Alles. Und merken kannst du sie dir auch.\" He smiles and "
+            "reaches for his own phone. Warm light, shallow focus, gentle handheld camera. "
+            "Clear German dialogue."
+        ),
+    },
+    {
+        "name": "d4_abbinder",
+        "seconds": 6,
+        "image": True,
+        "prompt": (
+            "The cartoon magician character raises his wand; a burst of golden magic "
+            "particles fills the frame and settles into a calm glowing halo around him. "
+            "Deep violet background, gentle camera pull-back, warm and celebratory."
+        ),
+    },
+]
+
+SCENE_SETS = {"spot": SCENES, "dialog": DIALOG_SCENES}
+
+
 def load_key() -> str:
     env = DIR / ".env"
     if env.exists():
@@ -145,7 +202,9 @@ def submit(scene: dict, key: str, model: str, ratio: str, resolution: str) -> tu
         "duration": scene["seconds"],
         "aspect_ratio": ratio,
         "resolution": resolution,
-        "generate_audio": False,  # voiceover and music are added in the edit
+        # Only the dialogue scenes need the model to speak; elsewhere the
+        # narration is added in the edit.
+        "generate_audio": bool(scene.get("audio")),
     }
     if scene.get("image"):
         import base64
@@ -175,7 +234,9 @@ def wait(status_url: str, key: str) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--scene", type=int, help="nur diese Szene (1-7)")
+    ap.add_argument("--scene", type=int, help="nur diese Szene")
+    ap.add_argument("--set", default="spot", choices=["spot", "dialog"],
+                    help="welcher Spot: Produktdemo oder Café-Gespräch")
     ap.add_argument("--model", default=DEFAULT_MODEL, help="Modellpfad der Higgsfield-API")
     ap.add_argument("--ratio", default="16:9", choices=["16:9", "9:16", "1:1"])
     # 1080p costs roughly twice the credits of 720p for the same clip.
@@ -192,7 +253,8 @@ def main() -> None:
     clips = DIR / "clips"
     clips.mkdir(exist_ok=True)
 
-    todo = [SCENES[args.scene - 1]] if args.scene else SCENES
+    scene_set = SCENE_SETS[args.set]
+    todo = [scene_set[args.scene - 1]] if args.scene else scene_set
     for scene in todo:
         out = clips / f"{scene['name']}.mp4"
         if out.exists():
