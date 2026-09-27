@@ -18,6 +18,8 @@ export const strings = {
     load_error_hint: 'Bitte prüfe deine Internetverbindung und versuche es erneut.',
     retry: 'Erneut versuchen',
     load_more: 'Mehr Stellen laden',
+    translate_failed: 'Der Suchbegriff konnte nicht übersetzt werden.',
+    translate_failed_hint: 'Versuche es erneut oder suche mit einem deutschen Begriff.',
     searched_as: 'Gesucht nach',
 
     // Filters
@@ -57,6 +59,7 @@ export const strings = {
     job_load_error: 'Stelle konnte nicht geladen werden.',
     apply_now: 'Jetzt bewerben',
     apply_hint: 'Öffnet die offizielle Stellenanzeige der Bundesagentur für Arbeit.',
+    offline_saved: 'Die vollständigen Angaben konnten nicht geladen werden. Du siehst deine gespeicherten Daten.',
     share_job: 'Teilen',
     share_intro: 'Schau dir diese Stelle an',
     share_copied: 'Link kopiert',
@@ -108,6 +111,8 @@ export const strings = {
     load_error_hint: 'يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.',
     retry: 'حاول مرة أخرى',
     load_more: 'تحميل المزيد من الوظائف',
+    translate_failed: 'تعذّرت ترجمة كلمة البحث.',
+    translate_failed_hint: 'حاول مرة أخرى أو ابحث بكلمة ألمانية.',
     searched_as: 'تم البحث عن',
 
     // Filters
@@ -147,6 +152,7 @@ export const strings = {
     job_load_error: 'تعذّر تحميل الوظيفة.',
     apply_now: 'قدّم الآن',
     apply_hint: 'يفتح إعلان الوظيفة الرسمي لدى وكالة العمل الألمانية.',
+    offline_saved: 'تعذّر تحميل التفاصيل الكاملة. تظهر لك البيانات المحفوظة.',
     share_job: 'مشاركة',
     share_intro: 'ألقِ نظرة على هذه الوظيفة',
     share_copied: 'تم نسخ الرابط',

@@ -4,7 +4,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { formatDate } from '@/utils/format';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, Image, StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -27,11 +27,23 @@ export default function FavoritesScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text variant="headlineMedium" style={[styles.heading, { color: colors.primary }]}>
-          {t('tab_favorites')}
-        </Text>
-        {cards.length === 0 ? (
+      {/* Virtualised like the search list — saved jobs can pile up too. */}
+      <FlatList
+        data={cards}
+        keyExtractor={(card) => card.id}
+        renderItem={({ item }) => (
+          <JobCard job={item} onPress={() => router.push(`/job/${item.id}`)} />
+        )}
+        contentContainerStyle={styles.container}
+        removeClippedSubviews
+        initialNumToRender={8}
+        windowSize={9}
+        ListHeaderComponent={
+          <Text variant="headlineMedium" style={[styles.heading, { color: colors.primary }]}>
+            {t('tab_favorites')}
+          </Text>
+        }
+        ListEmptyComponent={
           <View style={styles.empty}>
             <Image
               source={require('@/assets/jobwasil/jobwasil-magician.png')}
@@ -41,12 +53,8 @@ export default function FavoritesScreen() {
               {t('favorites_empty')}
             </Text>
           </View>
-        ) : (
-          cards.map((card) => (
-            <JobCard key={card.id} job={card} onPress={() => router.push(`/job/${card.id}`)} />
-          ))
-        )}
-      </ScrollView>
+        }
+      />
     </SafeAreaView>
   );
 }

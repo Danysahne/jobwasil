@@ -68,14 +68,16 @@ async function requestTranslation(
 }
 
 /**
- * Translates a set of labelled fields belonging to one entity.
+ * Translates a set of labelled fields belonging to one entity, reporting
+ * whether the request itself failed (as opposed to returning originals
+ * because nothing needed translating).
  * Field names must be regex-safe — they are used as section labels.
  */
-export async function translateFields(
+export async function translateWithStatus(
   fields: Record<string, string>,
   cacheKey: string,
   direction: TranslateDirection = 'de-ar',
-): Promise<Record<string, string>> {
+): Promise<{ fields: Record<string, string>; failed: boolean }> {
   await hydrate();
   const prefix = `${direction}:${cacheKey}:`;
 
@@ -86,7 +88,7 @@ export async function translateFields(
     if (hit !== undefined) result[key] = hit;
     else missing[key] = text;
   }
-  if (Object.keys(missing).length === 0) return result;
+  if (Object.keys(missing).length === 0) return { fields: result, failed: false };
 
   const fresh = await requestTranslation(missing, direction);
   for (const [key, original] of Object.entries(missing)) {
@@ -99,7 +101,16 @@ export async function translateFields(
     }
   }
   if (fresh) scheduleSave();
-  return result;
+  return { fields: result, failed: !fresh };
+}
+
+/** Convenience wrapper for callers that do not care why text came back. */
+export async function translateFields(
+  fields: Record<string, string>,
+  cacheKey: string,
+  direction: TranslateDirection = 'de-ar',
+): Promise<Record<string, string>> {
+  return (await translateWithStatus(fields, cacheKey, direction)).fields;
 }
 
 /**

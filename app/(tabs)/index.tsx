@@ -3,13 +3,13 @@ import { FilterSheet, JobFilters, countActiveFilters } from '@/components/Filter
 import { JobCard, JobCardData } from '@/components/JobCard';
 import { JobCardSkeleton } from '@/components/JobCardSkeleton';
 import { searchJobs } from '@/services/BundesApi';
-import { translateEach, translateFields } from '@/services/TranslateApi';
+import { translateEach, translateWithStatus } from '@/services/TranslateApi';
 import { useLanguage } from '@/context/LanguageContext';
 import { useDirection } from '@/hooks/useDirection';
 import { formatDate, isolateLtr } from '@/utils/format';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Image, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, Image, RefreshControl, StyleSheet, View } from 'react-native';
 import { Badge, Button, IconButton, Searchbar, Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -46,6 +46,8 @@ export default function HomeScreen() {
   const [filterVisible, setFilterVisible] = useState(false);
   // German term actually sent to the API when the user searched in Arabic
   const [searchedAs, setSearchedAs] = useState<string | null>(null);
+  // Arabic query could not be translated — searching it verbatim finds nothing
+  const [translateFailed, setTranslateFailed] = useState(false);
   const router = useRouter();
   const { t, isArabic } = useLanguage();
   const { row, textAlign } = useDirection();
@@ -62,12 +64,26 @@ export default function HomeScreen() {
       let was = search.trim() || undefined;
       let germanQuery: string | null = null;
       if (was && ARABIC_RE.test(was)) {
-        const result = await translateFields({ q: was }, `query_${was}`, 'ar-de');
-        if (result.q && result.q !== was) {
-          germanQuery = result.q;
-          was = result.q;
+        const { fields, failed } = await translateWithStatus(
+          { q: was },
+          `query_${was}`,
+          'ar-de',
+        );
+        if (failed) {
+          // Searching the Arabic term verbatim would return nothing and look
+          // like "no jobs found" — say what actually went wrong instead.
+          setTranslateFailed(true);
+          setSearchedAs(null);
+          setJobs([]);
+          setTotal(0);
+          return;
+        }
+        if (fields.q && fields.q !== was) {
+          germanQuery = fields.q;
+          was = fields.q;
         }
       }
+      setTranslateFailed(false);
       setSearchedAs(germanQuery);
 
       const data = await searchJobs({
@@ -154,10 +170,146 @@ export default function HomeScreen() {
     };
   });
 
+  // Skeletons, errors and empty states live in ListEmptyComponent, so the
+  // list itself stays empty while they are on screen.
+  const listData = loading || error || translateFailed ? [] : cards;
+
+  const header = (
+    <View>
+      {/* Brand header */}
+      <View style={[styles.brandRow, { flexDirection: row }]}>
+        <Image
+          source={require('@/assets/jobwasil/jobwasil-magician.png')}
+          style={styles.logo}
+        />
+        <View style={styles.brandText}>
+          <Text variant="headlineMedium" style={[styles.brandName, { color: colors.primary, textAlign }]}>
+            {t('app_name')}
+          </Text>
+          <Text variant="bodySmall" style={[{ color: colors.onSurfaceVariant, textAlign }]}>
+            {t('app_tagline')}
+          </Text>
+        </View>
+      </View>
+
+      {/* Search + filter */}
+      <View style={[styles.searchRow, { flexDirection: row }]}>
+        <Searchbar
+          placeholder={t('search_placeholder')}
+          value={query}
+          onChangeText={setQuery}
+          onSubmitEditing={() => loadJobs(query, filters)}
+          style={styles.searchBar}
+          inputStyle={{ textAlign }}
+        />
+        <View>
+          <IconButton
+            icon="tune-variant"
+            mode="contained-tonal"
+            size={26}
+            onPress={() => setFilterVisible(true)}
+            accessibilityLabel={t('filters')}
+          />
+          {activeFilters > 0 ? (
+            <Badge style={styles.badge} size={18}>
+              {activeFilters}
+            </Badge>
+          ) : null}
+        </View>
+      </View>
+
+      {/* Arabic query was translated — show the German term actually used */}
+      {searchedAs && !loading ? (
+        <Text
+          variant="bodySmall"
+          style={[styles.searchedAs, { textAlign, color: colors.onSurfaceVariant }]}>
+          {t('searched_as')}: {searchedAs}
+        </Text>
+      ) : null}
+    </View>
+  );
+
+  const empty = loading ? (
+    <JobCardSkeleton count={5} />
+  ) : translateFailed ? (
+    <View style={styles.empty}>
+      <Text style={[styles.message, { color: colors.error }]}>{t('translate_failed')}</Text>
+      <Text style={[styles.hint, { color: colors.onSurfaceVariant }]}>
+        {t('translate_failed_hint')}
+      </Text>
+      <Button
+        mode="contained"
+        icon="refresh"
+        onPress={() => loadJobs(query, filters)}
+        style={styles.retryButton}>
+        {t('retry')}
+      </Button>
+    </View>
+  ) : error ? (
+    <View style={styles.empty}>
+      <Text style={[styles.message, { color: colors.error }]}>{t('load_error')}</Text>
+      <Text style={[styles.hint, { color: colors.onSurfaceVariant }]}>
+        {t('load_error_hint')}
+      </Text>
+      <Button
+        mode="contained"
+        icon="refresh"
+        onPress={() => loadJobs(query, filters)}
+        style={styles.retryButton}>
+        {t('retry')}
+      </Button>
+    </View>
+  ) : (
+    <View style={styles.empty}>
+      <Image
+        source={require('@/assets/jobwasil/jobwasil-magician.png')}
+        style={styles.emptyImage}
+      />
+      <Text style={[styles.message, { color: colors.onSurfaceVariant }]}>
+        {t('no_results')}
+      </Text>
+    </View>
+  );
+
+  const footer =
+    listData.length > 0 ? (
+      <>
+        {jobs.length < total ? (
+          <Button
+            mode="outlined"
+            icon="chevron-down"
+            loading={loadingMore}
+            disabled={loadingMore}
+            onPress={() => loadJobs(query, filters, page + 1)}
+            style={styles.loadMore}>
+            {t('load_more')}
+          </Button>
+        ) : null}
+        <Text style={[styles.count, { color: colors.onSurfaceVariant }]}>
+          {/* Isolated so RTL does not flip "40 / 137" into "137 / 40" */}
+          {isolateLtr(`${jobs.length} / ${total.toLocaleString('de-DE')}`)}
+        </Text>
+      </>
+    ) : null;
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView
+      {/* FlatList (not ScrollView) so only visible cards stay mounted —
+          the list grows by 20 with every "load more". */}
+      <FlatList
+        data={listData}
+        keyExtractor={(card) => card.id}
+        renderItem={({ item }) => (
+          <JobCard job={item} onPress={() => router.push(`/job/${item.id}`)} />
+        )}
         contentContainerStyle={styles.container}
+        ListHeaderComponent={header}
+        ListEmptyComponent={empty}
+        ListFooterComponent={footer}
+        keyboardShouldPersistTaps="handled"
+        removeClippedSubviews
+        initialNumToRender={8}
+        windowSize={9}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -168,108 +320,8 @@ export default function HomeScreen() {
             colors={[colors.primary]}
             tintColor={colors.primary}
           />
-        }>
-        {/* Brand header */}
-        <View style={[styles.brandRow, { flexDirection: row }]}>
-          <Image
-            source={require('@/assets/jobwasil/jobwasil-magician.png')}
-            style={styles.logo}
-          />
-          <View style={styles.brandText}>
-            <Text variant="headlineMedium" style={[styles.brandName, { color: colors.primary, textAlign }]}>
-              {t('app_name')}
-            </Text>
-            <Text variant="bodySmall" style={[{ color: colors.onSurfaceVariant, textAlign }]}>
-              {t('app_tagline')}
-            </Text>
-          </View>
-        </View>
-
-        {/* Search + filter */}
-        <View style={[styles.searchRow, { flexDirection: row }]}>
-          <Searchbar
-            placeholder={t('search_placeholder')}
-            value={query}
-            onChangeText={setQuery}
-            onSubmitEditing={() => loadJobs(query, filters)}
-            style={styles.searchBar}
-            inputStyle={{ textAlign }}
-          />
-          <View>
-            <IconButton
-              icon="tune-variant"
-              mode="contained-tonal"
-              size={26}
-              onPress={() => setFilterVisible(true)}
-              accessibilityLabel={t('filters')}
-            />
-            {activeFilters > 0 ? (
-              <Badge style={styles.badge} size={18}>
-                {activeFilters}
-              </Badge>
-            ) : null}
-          </View>
-        </View>
-
-        {/* Arabic query was translated — show the German term actually used */}
-        {searchedAs && !loading ? (
-          <Text
-            variant="bodySmall"
-            style={[styles.searchedAs, { textAlign, color: colors.onSurfaceVariant }]}>
-            {t('searched_as')}: {searchedAs}
-          </Text>
-        ) : null}
-
-        {/* Results */}
-        {loading ? (
-          <JobCardSkeleton count={5} />
-        ) : error ? (
-          <View style={styles.empty}>
-            <Text style={[styles.message, { color: colors.error }]}>{t('load_error')}</Text>
-            <Text style={[styles.hint, { color: colors.onSurfaceVariant }]}>
-              {t('load_error_hint')}
-            </Text>
-            <Button
-              mode="contained"
-              icon="refresh"
-              onPress={() => loadJobs(query, filters)}
-              style={styles.retryButton}>
-              {t('retry')}
-            </Button>
-          </View>
-        ) : cards.length === 0 ? (
-          <View style={styles.empty}>
-            <Image
-              source={require('@/assets/jobwasil/jobwasil-magician.png')}
-              style={styles.emptyImage}
-            />
-            <Text style={[styles.message, { color: colors.onSurfaceVariant }]}>
-              {t('no_results')}
-            </Text>
-          </View>
-        ) : (
-          <>
-            {cards.map((card) => (
-              <JobCard key={card.id} job={card} onPress={() => router.push(`/job/${card.id}`)} />
-            ))}
-            {jobs.length < total ? (
-              <Button
-                mode="outlined"
-                icon="chevron-down"
-                loading={loadingMore}
-                disabled={loadingMore}
-                onPress={() => loadJobs(query, filters, page + 1)}
-                style={styles.loadMore}>
-                {t('load_more')}
-              </Button>
-            ) : null}
-            <Text style={[styles.count, { color: colors.onSurfaceVariant }]}>
-              {/* Isolated so RTL does not flip "40 / 137" into "137 / 40" */}
-              {isolateLtr(`${jobs.length} / ${total.toLocaleString('de-DE')}`)}
-            </Text>
-          </>
-        )}
-      </ScrollView>
+        }
+      />
 
       <FilterSheet
         visible={filterVisible}

@@ -153,7 +153,7 @@ export default function JobDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isArabic, t } = useLanguage();
   const { colors } = useTheme();
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const { isFavorite, toggleFavorite, favorites } = useFavorites();
 
   const [job, setJob] = useState<JobDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -195,9 +195,16 @@ export default function JobDetailScreen() {
       .finally(() => setTranslating(false));
   }, [isArabic, job]);
 
+  // Locally stored copy, used when the job itself cannot be fetched
+  const savedFavorite =
+    typeof id === 'string' ? favorites.find((f) => f.id === id) : undefined;
+  const savedTitle = isArabic
+    ? savedFavorite?.titelAr ?? savedFavorite?.titel
+    : savedFavorite?.titel;
+
   const title = isArabic
-    ? (translated.titel ?? job?.stellenangebotsTitel ?? t('job_detail'))
-    : (job?.stellenangebotsTitel ?? t('job_detail'));
+    ? (translated.titel ?? job?.stellenangebotsTitel ?? savedTitle ?? t('job_detail'))
+    : (job?.stellenangebotsTitel ?? savedTitle ?? t('job_detail'));
 
   const firma = isArabic ? (translated.firma ?? job?.firma) : job?.firma;
   const beschreibung = isArabic
@@ -205,8 +212,10 @@ export default function JobDetailScreen() {
     : job?.stellenangebotsBeschreibung;
 
   const fav = typeof id === 'string' && isFavorite(id);
+  // Also available when only the saved copy could be shown, so a favourite
+  // can still be removed while the job itself is unreachable.
   const heartButton =
-    job && typeof id === 'string' ? (
+    (job || savedFavorite) && typeof id === 'string' ? (
       <IconButton
         icon={fav ? 'heart' : 'heart-outline'}
         iconColor={fav ? colors.primary : colors.onSurfaceVariant}
@@ -214,11 +223,11 @@ export default function JobDetailScreen() {
         onPress={() =>
           toggleFavorite({
             id,
-            titel: job.stellenangebotsTitel ?? '',
-            titelAr: translated.titel,
-            arbeitgeber: job.firma,
-            ort: formatLocation(job) || undefined,
-            beruf: job.hauptberuf,
+            titel: job?.stellenangebotsTitel ?? savedFavorite?.titel ?? '',
+            titelAr: translated.titel ?? savedFavorite?.titelAr,
+            arbeitgeber: job?.firma ?? savedFavorite?.arbeitgeber,
+            ort: (job ? formatLocation(job) : savedFavorite?.ort) || undefined,
+            beruf: job?.hauptberuf ?? savedFavorite?.beruf,
             savedAt: 0,
           })
         }
@@ -274,14 +283,75 @@ export default function JobDetailScreen() {
         {loading ? (
           <ActivityIndicator animating style={styles.loading} />
         ) : error || !job ? (
-          <View style={styles.errorBox}>
-            <Text style={[styles.error, { color: colors.error }]}>
-              {t('job_load_error')}
-            </Text>
-            <Button mode="contained" icon="refresh" onPress={load}>
-              {t('retry')}
-            </Button>
-          </View>
+          <>
+            {/* A saved job still has title, employer and location on the
+                device — show those instead of an empty error screen. */}
+            {savedFavorite ? (
+              <Card style={styles.card}>
+                <Card.Content>
+                  <View style={[styles.titleRow, isArabic && styles.rowRtl]}>
+                    <Text
+                      variant="headlineSmall"
+                      style={[styles.title, styles.titleFlex, isArabic && styles.rtl]}>
+                      {isArabic ? savedFavorite.titelAr ?? savedFavorite.titel : savedFavorite.titel}
+                    </Text>
+                    {heartButton}
+                  </View>
+                  {savedFavorite.arbeitgeber ? (
+                    <Text variant="titleMedium" style={[styles.company, isArabic && styles.rtl]}>
+                      {savedFavorite.arbeitgeber}
+                    </Text>
+                  ) : null}
+                  {savedFavorite.ort ? (
+                    <Text variant="bodyMedium" style={[styles.location, isArabic && styles.rtl]}>
+                      📍 {savedFavorite.ort}
+                    </Text>
+                  ) : null}
+                </Card.Content>
+              </Card>
+            ) : null}
+
+            {savedFavorite ? (
+              <>
+                <View style={[styles.actions, isArabic && styles.rowRtl]}>
+                  <Button
+                    mode="contained"
+                    icon="open-in-new"
+                    onPress={openApplyPage}
+                    style={styles.applyButton}
+                    contentStyle={styles.applyContent}>
+                    {t('apply_now')}
+                  </Button>
+                  <Button mode="outlined" icon="share-variant" onPress={shareJob}>
+                    {t('share_job')}
+                  </Button>
+                </View>
+                <Card style={[styles.card, { backgroundColor: colors.secondaryContainer }]}>
+                  <Card.Content>
+                    <Text
+                      variant="bodyMedium"
+                      style={{
+                        color: colors.onSecondaryContainer,
+                        textAlign: isArabic ? 'right' : 'left',
+                      }}>
+                      {t('offline_saved')}
+                    </Text>
+                  </Card.Content>
+                </Card>
+              </>
+            ) : null}
+
+            <View style={styles.errorBox}>
+              {savedFavorite ? null : (
+                <Text style={[styles.error, { color: colors.error }]}>
+                  {t('job_load_error')}
+                </Text>
+              )}
+              <Button mode={savedFavorite ? 'outlined' : 'contained'} icon="refresh" onPress={load}>
+                {t('retry')}
+              </Button>
+            </View>
+          </>
         ) : (
           <>
             {/* Header */}
