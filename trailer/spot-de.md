@@ -23,7 +23,7 @@
 
 **Sprecher:** „Aber wer noch kein Deutsch spricht, kommt an sie nicht heran."
 
-> Close-up on a man's face lit by the cool glow of a phone screen held below
+> Close-up on the face of a young man of Middle Eastern appearance, lit by the cool glow of a phone screen held below
 > frame, the screen itself never visible. His eyes scan, his brow tightens
 > slightly, he exhales. Dim evening room, soft rim light from a window.
 > Static shot, very shallow focus, quiet and intimate.
@@ -62,7 +62,7 @@ geht per Fingertipp — bewerben direkt beim Arbeitgeber."
 
 **Sprecher:** „Aus einer Sprachbarriere wird ein Bewerbungsgespräch."
 
-> A young man in a clean shirt walks through a bright modern German office
+> A young man of Middle Eastern appearance in a clean shirt walks through a bright modern German office
 > lobby and shakes hands with a smiling woman in business attire. Morning sun
 > floods through tall glass walls. Steadicam follow shot, optimistic,
 > crisp corporate cinematography.

@@ -43,3 +43,4 @@ app-example
 .claude/
 .tunnel/
 trailer/.env
+trailer/clips/

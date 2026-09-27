@@ -21,7 +21,7 @@ from pathlib import Path
 
 DIR = Path(__file__).parent
 API = "https://api.higgsfield.ai"
-DEFAULT_MODEL = "bytedance/seedance-2.0/text-to-video"
+DEFAULT_MODEL = "bytedance/seedance-2.5/text-to-video"
 MASCOT = DIR.parent / "assets" / "jobwasil" / "jobwasil-magician.png"
 
 NEGATIVE = (
@@ -45,7 +45,8 @@ SCENES = [
         "name": "02_huerde",
         "seconds": 7,
         "prompt": (
-            "Close-up on a man's face lit by the cool glow of a phone screen held below "
+            "Close-up on the face of a young man of Middle Eastern appearance, lit by the "
+            "cool glow of a phone screen held below "
             "frame, the screen itself never visible. His eyes scan, his brow tightens "
             "slightly, he exhales. Dim evening room, soft rim light from a window. "
             "Static shot, very shallow focus, quiet and intimate."
@@ -85,7 +86,8 @@ SCENES = [
         "name": "06_ergebnis",
         "seconds": 9,
         "prompt": (
-            "A young man in a clean shirt walks through a bright modern German office "
+            "A young man of Middle Eastern appearance in a clean shirt walks through a "
+            "bright modern German office "
             "lobby and shakes hands with a smiling woman in business attire. Morning sun "
             "floods through tall glass walls. Steadicam follow shot, optimistic, crisp "
             "corporate cinematography."
@@ -131,7 +133,7 @@ def call(path: str, key: str, payload: dict | None = None) -> dict:
         raise RuntimeError(f"Higgsfield HTTP {e.code}: {body}") from e
 
 
-def submit(scene: dict, key: str, model: str, ratio: str) -> str:
+def submit(scene: dict, key: str, model: str, ratio: str) -> tuple[str, str]:
     payload = {
         "prompt": scene["prompt"],
         "negative_prompt": NEGATIVE,
@@ -147,12 +149,15 @@ def submit(scene: dict, key: str, model: str, ratio: str) -> str:
             "data:image/png;base64," + base64.b64encode(MASCOT.read_bytes()).decode()
         )
     data = call(model, key, payload)
-    return data.get("request_id") or data["id"]
+    request_id = data.get("request_id") or data["id"]
+    # The API hands back its own status host — use it rather than guessing.
+    status_url = data.get("status_url") or f"{API}/requests/{request_id}/status"
+    return request_id, status_url
 
 
-def wait(request_id: str, key: str) -> str:
+def wait(status_url: str, key: str) -> str:
     for _ in range(180):  # up to ~30 min
-        data = call(f"/requests/{request_id}/status", key)
+        data = call(status_url, key)
         status = (data.get("status") or "").lower()
         if status == "completed":
             video = data.get("video") or {}
@@ -187,9 +192,9 @@ def main() -> None:
             print(f"✔ {scene['name']} liegt schon vor — übersprungen")
             continue
         print(f"⏳ {scene['name']} ({scene['seconds']}s) wird eingereicht …")
-        request_id = submit(scene, key, args.model, args.ratio)
-        print(f"   Auftrag {request_id} — warte auf Generierung")
-        url = wait(request_id, key)
+        request_id, status_url = submit(scene, key, args.model, args.ratio)
+        print(f"   Auftrag {request_id} — warte auf Generierung (ca. 2-3 min)")
+        url = wait(status_url, key)
         urllib.request.urlretrieve(url, out)
         print(f"✔ {scene['name']} → {out}")
 
