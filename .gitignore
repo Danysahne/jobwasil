@@ -38,3 +38,12 @@ yarn-error.*
 
 app-example
 .env
+
+# Claude Code local config & worktrees
+.claude/
+.tunnel/
+trailer/.env
+trailer/clips/
+trailer/build/
+trailer/stimmproben/
+trailer/*.mp4
